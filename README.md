@@ -26,6 +26,7 @@ Para mas detalle ver:
 - `docs/ARCHITECTURE.md`
 - `docs/RUBRIC_ANALYSIS.md`
 - `docs/EVALUATION_PLAN.md`
+- `docs/VERCEL_DEPLOYMENT.md`
 
 ## Ejecucion del proyecto
 
@@ -99,3 +100,5 @@ Para mas detalle ver:
 El frontend puede desplegarse en Vercel. El backend FastAPI necesita un servicio persistente como Render, Railway o Fly.io, o una adaptacion a funciones serverless.
 
 En produccion, el frontend debe usar una variable como `VITE_API_URL` para apuntar al backend desplegado.
+
+Las llaves reales no deben subirse al repositorio. Configuralas como variables de entorno en Vercel y en el proveedor del backend.
