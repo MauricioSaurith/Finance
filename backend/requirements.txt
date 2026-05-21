@@ -1,0 +1,15 @@
+langchain
+langchain-community
+langchain-openai
+langchain-groq
+chromadb
+yfinance
+fastapi
+uvicorn
+pydantic
+python-dotenv
+sentence-transformers
+pandas
+requests
+duckduckgo-search
+feedparser
