@@ -4,87 +4,78 @@
 
 Estado actual estimado: Alto.
 
-El problema es relevante: un usuario necesita analizar acciones y registrar decisiones de portafolio usando datos actuales, noticias y memoria historica. El uso de un agente se justifica porque la tarea combina varias decisiones: entender la intencion del usuario, seleccionar herramientas, recuperar contexto y generar una respuesta explicada.
+El problema es relevante: un usuario necesita analizar acciones y registrar decisiones de portafolio usando datos actuales, noticias, memoria historica y criterios estables de analisis.
 
-Para aspirar a Superior, la entrega debe enfatizar que no es un chatbot financiero generico. El valor esta en combinar:
+El uso de un agente se justifica porque la tarea combina varias decisiones:
 
-- Datos en tiempo real con `yfinance`.
-- Noticias y memoria historica en ChromaDB.
-- Documentos base de analisis financiero.
-- LLM para explicar hallazgos y riesgos.
-- Tool de Notion para registrar operaciones reales.
-
-Riesgo evaluativo: si la justificacion no se escribe claramente, puede verse como una interfaz bonita sobre un LLM.
+- entender la intencion del usuario;
+- seleccionar herramientas distintas segun el caso;
+- recuperar contexto curado o historico;
+- explicar hallazgos y riesgos;
+- ejecutar una accion sensible en Notion con validaciones.
 
 ## 2. Diseno de la arquitectura del agente
 
-Estado actual estimado: Alto, acercandose a Superior con la documentacion y corpus base.
+Estado actual estimado: Alto/Superior.
 
-Componentes existentes:
+Fortalezas actuales:
 
 - Frontend React/Vite.
 - API FastAPI.
 - Agente LangChain con Groq.
 - Tools financieras y de Notion.
 - Embeddings locales con `all-MiniLM-L6-v2`.
-- Vector database ChromaDB.
-- Memoria conversacional en runtime.
+- ChromaDB con corpus curado y noticias persistidas.
+- Memoria conversacional aislada por sesion.
+- Trazas de tools para evaluacion.
 
-Fortaleza: el sistema integra LLM, tools, embeddings y vector DB.
-
-Debilidad: inicialmente el RAG funcionaba principalmente como memoria de noticias consultadas. Eso es valido, pero mas debil que un RAG con corpus curado. Ahora se agrego `backend/knowledge_base` para cargar conocimiento estable sobre analisis financiero y politicas de uso del RAG.
-
-Para Superior, conviene explicar chunking, metadata, retrieval, flujo de decision y por que el registro en Notion usa una ruta deterministica para una accion sensible.
+La arquitectura ya no depende solo de una memoria global. Eso mejora consistencia y facilita evaluar el comportamiento del agente.
 
 ## 3. Implementacion tecnica y funcionamiento
 
-Estado actual estimado: Basico/Alto antes de correcciones; Alto despues de los ajustes.
+Estado actual estimado: Alto.
 
-Funciona:
+Mejoras incorporadas:
 
-- Chat con agente.
-- Consulta de precio y fundamentales.
-- Consulta de noticias.
-- Persistencia de noticias en ChromaDB.
-- Registro de compras/ventas en Notion.
-- Paneles frontend de NYT y tendencias simuladas.
-
-Problemas encontrados y corregidos:
-
-- La tool de Notion existia pero no estaba conectada al agente.
-- `.env` no se cargaba directamente desde `tools.py`.
-- El schema de Notion usaba `Price`, no `Precio`.
-- La propiedad `Accion` tenia problema de codificacion y debia ser `Acción`.
-- El modelo podia fallar generando llamadas de tool para registrar operaciones; se agrego un flujo deterministico en `/chat`.
+- Separacion entre `search_knowledge_base` y `search_stored_news`.
+- Chunking del corpus curado.
+- Ids deterministas para reducir duplicados en ChromaDB.
+- Noticias resumidas antes de entregarlas al LLM, para reducir ruido y consumo.
+- `session_id` para aislar memoria entre pruebas.
+- `trace` en la respuesta para observar uso de tools.
+- Flujo deterministico para operaciones de Notion.
 
 Riesgos pendientes:
 
-- Hay mojibake en varios textos del proyecto.
-- El frontend tiene errores de lint.
-- ChromaDB puede duplicar documentos si se ejecuta `seed_knowledge.py` muchas veces.
-- El backend FastAPI no se despliega directamente en Vercel como un servidor tradicional.
+- El modelo aun puede contestar de forma generica si no decide usar retrieval.
+- yfinance puede cambiar campos o devolver datos incompletos.
+- Groq puede sufrir rate limits.
+- El sistema todavia no tiene una evaluacion automatizada con scoring.
 
 ## 4. Evaluacion, analisis critico e interpretacion
 
-Estado actual estimado: Basico si solo se muestra la app; Alto/Superior si se presenta una matriz de pruebas.
+Estado actual estimado: Alto, con mejor base para aspirar a Superior.
 
-Debe incluirse evidencia de:
+Lo que ahora se puede demostrar con evidencia:
 
-- Respuestas con precio actual.
-- Uso de noticias recientes.
-- Recuperacion desde ChromaDB.
-- Registro correcto en Notion.
-- Fallos controlados cuando falta cantidad, ticker o credenciales.
-- Limitaciones de yfinance, Groq y retrieval.
+- Respuestas con precio actual usando `get_stock_price`.
+- Recuperacion de noticias recientes usando `get_market_news`.
+- Recuperacion de contexto curado usando `search_knowledge_base`.
+- Recuperacion de noticias almacenadas usando `search_stored_news`.
+- Validacion segura cuando faltan cantidad o ticker.
+- Aislamiento de memoria por sesion.
+- Trazabilidad de tools mediante `trace`.
 
-Para Superior, la evaluacion debe discutir alucinaciones, fallos de tools, consistencia, calidad de retrieval y mejoras futuras.
+Lo que aun debes discutir explicitamente en la presentacion:
 
-## Respuesta a la duda sobre RAG
+- alucinaciones o respuestas demasiado genericas;
+- casos en que el retrieval trae contexto relacionado pero no suficiente;
+- limitaciones de Groq, yfinance y Notion;
+- posibles errores de seleccion de tools;
+- mejoras futuras y tradeoffs del sistema.
 
-Si, antes el RAG almacenaba principalmente noticias. Eso puede defenderse como memoria dinamica de mercado, pero es una version incompleta para una rubrica academica fuerte.
+## Juicio final
 
-La comparacion con los companeros es util: ellos tienen un corpus documental estable sobre normativas. Para Finance Agent, el equivalente debe ser una base de conocimiento financiero curada mas memoria dinamica de noticias. Por eso se agrego `backend/knowledge_base`.
+Con estas mejoras, el proyecto ya no solo "funciona": tambien deja evidencia observable para evaluar retrieval, consistencia, correctitud de tools y robustez.
 
-Recomendacion de presentacion:
-
-"Nuestro RAG combina dos fuentes: un corpus base de criterios de analisis financiero y una memoria incremental de noticias recuperadas durante la interaccion. Esto permite responder tanto con principios estables como con eventos recientes del mercado."
+Todavia no conviene afirmar que el sistema elimina las alucinaciones. Lo correcto es decir que ahora las hace mas detectables y auditables mediante sesiones limpias, contexto recuperado y trazas de tools.
